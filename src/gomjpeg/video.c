@@ -28,8 +28,7 @@ struct buffer {
         size_t length;
 };
 
-static void xioctl(int fh, int request, void *arg)
-{
+static void xioctl(int fh, int request, void *arg) {
         int r;
 
         do {
@@ -43,8 +42,7 @@ static void xioctl(int fh, int request, void *arg)
 }
 
 
-int video_start(char *dev_name)
-{
+int video_start(char *dev_name) {
         fd = v4l2_open(dev_name, O_RDWR | O_NONBLOCK, 0);
         if (fd < 0) {
 		return 1;
@@ -107,37 +105,29 @@ int video_start(char *dev_name)
 struct image grab_image(void) {
 	struct image ret;
 	ret.data = 0;
-//        for (i = 0; i < 20; i++) {
-                do {
-                        FD_ZERO(&fds);
-                        FD_SET(fd, &fds);
+	do {
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
 
-                        /* Timeout. */
-                        tv.tv_sec = 2;
-                        tv.tv_usec = 0;
+		/* Timeout. */
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
 
-                        r = select(fd + 1, &fds, NULL, NULL, &tv);
-                } while ((r == -1 && (errno = EINTR)));
-                if (r == -1) {
-			return ret;
-                }
+		r = select(fd + 1, &fds, NULL, NULL, &tv);
+	} while ((r == -1 && (errno = EINTR)));
+	if (r == -1) {
+		return ret;
+	}
 
-                memset(&buf, 0, sizeof(buf));
-                buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                buf.memory = V4L2_MEMORY_MMAP;
-                xioctl(fd, VIDIOC_DQBUF, &buf);
+	memset(&buf, 0, sizeof(buf));
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+	xioctl(fd, VIDIOC_DQBUF, &buf);
 
-    //            sprintf(out_name, "out%03d.jpg", i);
-    //            fout = fopen(out_name, "w");
-    //            if (!fout) {
-//			return 6;
- //               }
-  //              fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
-   //             fclose(fout);
-		ret.data = buffers[buf.index].start;
-		ret.length = buf.bytesused;
+	ret.data = buffers[buf.index].start;
+	ret.length = buf.bytesused;
 
-                xioctl(fd, VIDIOC_QBUF, &buf);
+	xioctl(fd, VIDIOC_QBUF, &buf);
 
 	return ret;
 }

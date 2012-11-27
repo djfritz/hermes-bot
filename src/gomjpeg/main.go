@@ -1,14 +1,14 @@
 package main
 
 import (
-	"net/http"
+	"flag"
 	"fmt"
 	"mime/multipart"
+	"net/http"
 	"net/textproto"
-	"time"
-	"os/signal"
 	"os"
-	"flag"
+	"os/signal"
+	"time"
 )
 
 var (

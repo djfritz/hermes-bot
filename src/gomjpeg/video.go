@@ -9,7 +9,6 @@ import (
 	"unsafe"
 )
 
-
 func video_start(path string) {
 	p := C.CString(path)
 	C.video_start(p)
