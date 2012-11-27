@@ -4,21 +4,45 @@ import (
 	"net/http"
 	"fmt"
 	"mime/multipart"
-//	"bytes"
-//	"io"
 	"net/textproto"
-//	"os"
 	"time"
+	"os/signal"
+	"os"
+	"flag"
+)
+
+var (
+	images = make(chan []byte)
+
+	f_dev = flag.String("input", "/dev/video0", "input device")
 )
 
 func main() {
+	flag.Parse()
+
+	sig := make(chan os.Signal, 1024)
+	signal.Notify(sig, os.Interrupt)
+	go func() {
+		<-sig
+		teardown()
+	}()
+
+	video_start(*f_dev)
+
+	go imageFeeder()
+
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
+	teardown()
+}
+
+func imageFeeder() {
+	for {
+		images <- grab_image()
+	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	video_start("/dev/video0")
-
 	mh := make(textproto.MIMEHeader)
 	mh.Set("Content-Type", "image/jpeg")
 
@@ -30,15 +54,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	// for each jpeg image
 	for {
-//		filename := fmt.Sprintf("out%03d.jpg", i)
-//		j, err := os.Open(filename)
-//		if err != nil {
-//			fmt.Println(err)
-//			return
-//		}
-//		buf := new(bytes.Buffer)
-//		io.Copy(buf, j)
-		image := grab_image()
+		image := <-images
 
 		mh.Set("Content-length", fmt.Sprintf("%d", len(image)))
 		fm, err := m.CreatePart(mh)
@@ -46,10 +62,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
-		fm.Write(image)
-		time.Sleep(50 * time.Millisecond)
+		_, err = fm.Write(image)
+		if err != nil {
+			break
+		}
+		time.Sleep(33 * time.Millisecond)
 	}
+}
 
+func teardown() {
 	video_stop()
-
+	os.Exit(0)
 }
