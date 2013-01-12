@@ -66,7 +66,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
-		time.Sleep(33 * time.Millisecond)
+		time.Sleep(66 * time.Millisecond) //33
 	}
 }
 
