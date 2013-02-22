@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"goserial"
+	"io"
+	"net"
 	"os"
 	"os/signal"
-	"net"
-	"io"
 )
 
 type packet struct {
-	left byte
+	left  byte
 	right byte
 }
 
@@ -62,14 +62,14 @@ func listener() {
 			fmt.Println(err)
 			continue
 		}
-	
-		for {	
+
+		for {
 			// handle only one connection
 			data := make([]byte, 2)
 			n, err := conn.Read(data)
 			if err != nil {
 				if err == io.EOF {
-					continue
+					break
 				}
 				fmt.Println(err)
 				break
@@ -77,13 +77,13 @@ func listener() {
 			//fmt.Println("got", n, data)
 			if n != 2 {
 				incoming <- packet{
-					left: 0,
+					left:  0,
 					right: 0,
 				}
 				continue
 			}
 			incoming <- packet{
-				left: data[0],
+				left:  data[0],
 				right: data[1],
 			}
 		}
