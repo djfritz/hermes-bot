@@ -1,38 +1,47 @@
 package main
 
 import (
-	"time"
-	"fmt"
 	"os"
 	"kbdmap"
 )
 
-func KeyboardPoller() {
-	f, err := os.Open("/dev/input/event3")
+var (
+	f_kbd *os.File
+)
+
+type keys struct {
+	UP bool
+	DOWN bool
+	LEFT bool
+	RIGHT bool
+}
+
+func kbd_init() error {
+	var err error
+	f_kbd, err = os.Open("/dev/input/event3")
+	return err
+}
+
+func GetKeys() (keys, error) {
+	k := keys{}
+
+	km, err := kbdmap.GetKBDMap(f_kbd)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+		return k, err
 	}
 
-	for {
-		km, err := kbdmap.GetKBDMap(f)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
-		}
-		if kbdmap.IsPressed(km, kbdmap.KEY_W) {
-			ncurses_printw("W\n")
-		}
-		if kbdmap.IsPressed(km, kbdmap.KEY_A) {
-			ncurses_printw("A\n")
-		}
-		if kbdmap.IsPressed(km, kbdmap.KEY_S) {
-			ncurses_printw("S\n")
-		}
-		if kbdmap.IsPressed(km, kbdmap.KEY_D) {
-			ncurses_printw("D\n")
-		}
-		ncurses_refresh()
-		time.Sleep(heartbeat_rate)
+	if kbdmap.IsPressed(km, kbdmap.KEY_W) {
+		k.UP = true
 	}
+	if kbdmap.IsPressed(km, kbdmap.KEY_S) {
+		k.DOWN = true
+	}
+	if kbdmap.IsPressed(km, kbdmap.KEY_A) {
+		k.LEFT = true
+	}
+	if kbdmap.IsPressed(km, kbdmap.KEY_D) {
+		k.RIGHT = true
+	}
+
+	return k, nil
 }

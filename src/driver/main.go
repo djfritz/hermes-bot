@@ -4,10 +4,11 @@ import (
 	"os/signal"
 	"os"
 	"time"
+	"fmt"
 )
 
 const (
-	heartbeat_rate = (1 * time.Second)
+	heartbeat_rate = (100 * time.Millisecond)
 )
 
 func main() {
@@ -16,6 +17,12 @@ func main() {
 
 	ncurses_init()
 	defer ncurses_endwin()
+
+	err := kbd_init()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 
 	// i can get feedback from the bot (heartbeat, bytes transferred, led color)
 	// i can also get feedback from the keyboard, which is polled in an event loop
@@ -27,7 +34,22 @@ func main() {
 	// redraw will just consume that data when needed. I don't want lag with ill-consumed channels, etc.
 
 	//go RedrawHandler()
-	go KeyboardPoller()
+	go EventLoop()
 
 	<-sig
+}
+
+func EventLoop() {
+	for {
+		k, err := GetKeys()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		s := fmt.Sprintf("%v\n", k)
+		ncurses_printw(s)
+		ncurses_move(0,0)
+		ncurses_refresh()
+		time.Sleep(heartbeat_rate)
+	}
 }
