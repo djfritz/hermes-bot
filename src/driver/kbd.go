@@ -36,6 +36,15 @@ func GetKeys() (hermes.Keys, error) {
 	if kbdmap.IsPressed(km, kbdmap.KEY_D) {
 		k.RIGHT = true
 	}
+	if kbdmap.IsPressed(km, kbdmap.KEY_1) {
+		k.GEAR1 = true
+	}
+	if kbdmap.IsPressed(km, kbdmap.KEY_2) {
+		k.GEAR2 = true
+	}
+	if kbdmap.IsPressed(km, kbdmap.KEY_3) {
+		k.GEAR3 = true
+	}
 
 	return k, nil
 }

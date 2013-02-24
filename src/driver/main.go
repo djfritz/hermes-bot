@@ -10,17 +10,32 @@ import (
 )
 
 const (
-	LMIN = 1
-	LMAX = 127
+	LMIN_3 = 1
+	LMAX_3 = 127
+	LMIN_2 = 32
+	LMAX_2 = 96
+	LMIN_1 = 54
+	LMAX_1 = 74
 	LNEUTRAL = 64
 
-	RMIN = 128
-	RMAX = 255
+	RMIN_3 = 128
+	RMAX_3 = 255
+	RMIN_2 = 159
+	RMAX_2 = 224
+	RMIN_1 = 182
+	RMAX_1 = 202
 	RNEUTRAL = 192
 )
 
 var (
 	sig = make(chan os.Signal, 1024)
+
+	LMIN byte
+	LMAX byte
+
+	RMIN byte
+	RMAX byte
+	GEAR = 1
 )
 
 func main() {
@@ -72,7 +87,8 @@ func EventLoop(h *hermes.Conn) {
 		}
 		s := fmt.Sprintf("%d %d\n", left, right)
 		ncurses_printw(s)
-		ncurses_move(0,0)
+		ncurses_move(1,0)
+		ncurses_printw(fmt.Sprintf("GEAR %v", GEAR))
 		ncurses_refresh()
 
 		packet := hermes.Packet{
@@ -100,10 +116,30 @@ func GetMotorValues() (byte, byte, error) {
 	var left byte
 	var right byte
 	keys, err := GetKeys()
-	ncurses_printw(fmt.Sprintf("%v", keys))
-	ncurses_move(1,0)
 	if err != nil {
 		return 0, 0, err
+	}
+
+	// check for gear shifting
+	switch {
+	case keys.GEAR1:
+		GEAR = 1
+		LMIN = LMIN_1
+		LMAX = LMAX_1
+		RMIN = RMIN_1
+		RMAX = RMAX_1
+	case keys.GEAR2:
+		GEAR = 2
+		LMIN = LMIN_2
+		LMAX = LMAX_2
+		RMIN = RMIN_2
+		RMAX = RMAX_2
+	case keys.GEAR3:
+		GEAR = 3
+		LMIN = LMIN_3
+		LMAX = LMAX_3
+		RMIN = RMIN_3
+		RMAX = RMAX_3
 	}
 
 	switch {

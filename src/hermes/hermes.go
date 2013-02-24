@@ -17,6 +17,9 @@ type Keys struct {
 	DOWN bool
 	LEFT bool
 	RIGHT bool
+	GEAR1 bool
+	GEAR2 bool
+	GEAR3 bool
 }
 
 type Conn struct {
