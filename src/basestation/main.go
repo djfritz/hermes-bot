@@ -61,7 +61,7 @@ func main() {
 					data := []byte{packet.Left, packet.Right}
 					s.Write(data)
 				}
-			case <-time.After(2 * hermes.Rate):
+			case <-time.After(4 * hermes.Rate):
 				fmt.Println("loss of signal!")
 				s.Write([]byte{byte(0)})
 			case <-done:
