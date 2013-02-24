@@ -3,18 +3,12 @@ package main
 import (
 	"os"
 	"kbdmap"
+	"hermes"
 )
 
 var (
 	f_kbd *os.File
 )
-
-type keys struct {
-	UP bool
-	DOWN bool
-	LEFT bool
-	RIGHT bool
-}
 
 func kbd_init() error {
 	var err error
@@ -22,8 +16,8 @@ func kbd_init() error {
 	return err
 }
 
-func GetKeys() (keys, error) {
-	k := keys{}
+func GetKeys() (hermes.Keys, error) {
+	k := hermes.Keys{}
 
 	km, err := kbdmap.GetKBDMap(f_kbd)
 	if err != nil {

@@ -3,25 +3,27 @@ package main
 import (
 	"fmt"
 	"goserial"
-	"io"
-	"net"
 	"os"
 	"os/signal"
+	"hermes"
+	"net"
+	"time"
 )
 
-type packet struct {
-	left  byte
-	right byte
-}
-
-var incoming chan packet
+var (
+	packets chan hermes.Packet
+	done chan bool
+)
 
 func main() {
 	s, err := goserial.Open("/dev/ttyUSB0", 9600)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		os.Exit(-1)
 	}
+
+	packets = make(chan hermes.Packet)
+	done = make(chan bool)
 
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt)
@@ -31,61 +33,62 @@ func main() {
 		os.Exit(0)
 	}()
 
-	incoming = make(chan packet, 1024)
-
-	go listener()
-
-	for {
-		packet := <-incoming
-		//fmt.Println("incoming", packet)
-
-		if int(packet.left) == 0 {
-			s.Write([]byte{byte(0)})
-			continue
-		}
-
-		data := []byte{packet.left, packet.right}
-		s.Write(data)
-	}
-}
-
-func listener() {
-	ln, err := net.Listen("tcp", ":8081")
+	laddr := fmt.Sprintf(":%v", hermes.PORT)
+	ln, err := net.Listen("tcp", laddr)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		s.Close()
+		os.Exit(-1)
 	}
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println(err)
-			continue
+			s.Close()
+			os.Exit(-1)
 		}
+		h := hermes.New(conn)
+		go connHandler(h)
 
+		CONN_LOOP:
 		for {
-			// handle only one connection
-			data := make([]byte, 2)
-			n, err := conn.Read(data)
-			if err != nil {
-				if err == io.EOF {
-					break
+			select {
+			case packet := <-packets:
+				if int(packet.Left) == 0 {
+					s.Write([]byte{byte(0)})
+				} else {
+					data := []byte{packet.Left, packet.Right}
+					s.Write(data)
 				}
-				fmt.Println(err)
-				break
-			}
-			//fmt.Println("got", n, data)
-			if n != 2 {
-				incoming <- packet{
-					left:  0,
-					right: 0,
-				}
-				continue
-			}
-			incoming <- packet{
-				left:  data[0],
-				right: data[1],
+			case <-time.After(2 * hermes.Rate):
+				fmt.Println("loss of signal!")
+				s.Write([]byte{byte(0)})
+			case <-done:
+				break CONN_LOOP
 			}
 		}
 	}
+}
+
+func connHandler(h *hermes.Conn) {
+	for {
+		packet, err := h.Recv()
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+
+		packets <- packet
+
+		p := hermes.Packet{
+			Ack: true,
+		}
+		err = h.Send(p)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+	}
+	done <- true
 }
