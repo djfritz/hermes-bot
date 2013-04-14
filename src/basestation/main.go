@@ -13,6 +13,7 @@ import (
 var (
 	packets chan hermes.Packet
 	done chan bool
+	LOS bool
 )
 
 func main() {
@@ -41,6 +42,10 @@ func main() {
 		os.Exit(-1)
 	}
 
+	// start the shiftbrite
+	go shiftbrite()
+	LOS = true
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -55,6 +60,7 @@ func main() {
 		for {
 			select {
 			case packet := <-packets:
+				LOS = false
 				if int(packet.Left) == 0 {
 					s.Write([]byte{byte(0)})
 				} else {
@@ -62,9 +68,11 @@ func main() {
 					s.Write(data)
 				}
 			case <-time.After(4 * hermes.Rate):
+				LOS = true
 				fmt.Println("loss of signal!")
 				s.Write([]byte{byte(0)})
 			case <-done:
+				LOS = true
 				break CONN_LOOP
 			}
 		}
