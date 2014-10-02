@@ -12,7 +12,7 @@ var (
 
 func kbd_init() error {
 	var err error
-	f_kbd, err = os.Open("/dev/input/event3")
+	f_kbd, err = os.Open("/dev/input/event0")
 	return err
 }
 
@@ -24,16 +24,16 @@ func GetKeys() (hermes.Keys, error) {
 		return k, err
 	}
 
-	if kbdmap.IsPressed(km, kbdmap.KEY_W) {
+	if kbdmap.IsPressed(km, kbdmap.KEY_DOWN) {
 		k.UP = true
 	}
-	if kbdmap.IsPressed(km, kbdmap.KEY_S) {
+	if kbdmap.IsPressed(km, kbdmap.KEY_UP) {
 		k.DOWN = true
 	}
-	if kbdmap.IsPressed(km, kbdmap.KEY_A) {
+	if kbdmap.IsPressed(km, kbdmap.KEY_LEFT) {
 		k.LEFT = true
 	}
-	if kbdmap.IsPressed(km, kbdmap.KEY_D) {
+	if kbdmap.IsPressed(km, kbdmap.KEY_RIGHT) {
 		k.RIGHT = true
 	}
 	if kbdmap.IsPressed(km, kbdmap.KEY_1) {

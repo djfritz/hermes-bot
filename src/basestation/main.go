@@ -43,7 +43,6 @@ func main() {
 	}
 
 	// start the shiftbrite
-	go shiftbrite()
 	LOS = true
 
 	for {
